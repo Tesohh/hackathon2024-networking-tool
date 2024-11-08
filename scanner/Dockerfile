@@ -9,5 +9,6 @@ WORKDIR /app
 
 COPY main.py .
 COPY os_detector.py .
+COPY scan.py .
 
 ENTRYPOINT [ "python3", "main.py" ]

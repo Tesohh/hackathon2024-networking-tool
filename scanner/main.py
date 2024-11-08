@@ -3,11 +3,10 @@ import asyncio
 import json
 import sys
 
-import scanner
+import scan
 import os_detector
 import cve.cve
 import cve.fetch_cves
-
 
 
 async def main(iface: str):
@@ -15,7 +14,7 @@ async def main(iface: str):
     s = asyncio.Semaphore(1000)
     res = set()
 
-    await asyncio.gather(*(scanner.do_test(ip_addr, s, 3.0, res) for ip_addr in scanner.network_gen(scanner.get_network(iface))))
+    await asyncio.gather(*(scan.do_test(ip_addr, s, 3.0, res) for ip_addr in scan.network_gen(scan.get_network(iface))))
 
     host_info_map = {addr: os_detector.get_cpe(addr) for addr in res}
 
