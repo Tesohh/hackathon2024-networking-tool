@@ -5,6 +5,8 @@ import sys
 
 import scanner
 import os_detector
+import cve.cve
+import cve.fetch_cves
 
 
 
@@ -17,7 +19,17 @@ async def main(iface: str):
 
     host_info_map = {addr: os_detector.get_cpe(addr) for addr in res}
 
-    json.dump(host_info_map, sys.stdout, indent=4)
+    cves: list[cve.cve.CVE] = []
+    for addr, item in host_info_map.items():
+        for cpe in item["cpe"]:
+            res = cve.fetch_cves.from_cpe(cpe)
+            for vuln in res["vulnerabilities"]:
+                cves.append(cve.cve.CVE.from_json(vuln))
+
+    print(cves)
+    
+
+    # json.dump(host_info_map, sys.stdout, indent=4)
 
 
 if __name__ == "__main__":
