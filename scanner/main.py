@@ -5,6 +5,8 @@ import asyncio
 import json
 import sys
 
+import os_detector
+
 
 async def test_host(addr: int, timeout: float) -> bool:
     s = socket.socket()
@@ -54,23 +56,11 @@ async def main(iface: str):
     s = asyncio.Semaphore(1000)
     res = set()
 
-    async with asyncio.TaskGroup() as tg:
-        for ip_addr in network_gen(get_network(iface)):
-            tg.create_task(do_test(ip_addr, s, 3.0, res))
+    await asyncio.gather(*(do_test(ip_addr, s, 3.0, res) for ip_addr in network_gen(get_network(iface))))
 
-    mac_map = dict.fromkeys(res)
+    host_info_map = {addr: os_detector.get_cpe(addr) for addr in res}
 
-    for i, line in enumerate(open("/proc/net/arp")):
-        if i == 0:
-            continue
-        ip, _, _, mac, *_ = line.split()
-
-        if not ip in mac_map:
-            continue # not needed
-
-        mac_map[ip] = mac
-
-    json.dump(mac_map, sys.stdout)
+    json.dump(host_info_map, sys.stdout, indent=4)
 
 
 if __name__ == "__main__":
