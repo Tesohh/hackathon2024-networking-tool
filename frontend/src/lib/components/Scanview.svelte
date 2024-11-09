@@ -1,11 +1,14 @@
 <script lang="ts">
     import {Device, Scan, lowVulns, mediumVulns, highVulns} from "$lib/scan";
     import ToggleableListItem from "./ToggleableListItem.svelte"; 
-    let {networkName, date, devices}: Scan = $props()
+    let {networkName, date, devices, description}: {networkName: string, date: Date, devices: Device[], description: string} = $props()
     let selectedDevice: Device | undefined = $state();
 </script>
 
 <p class="text-4xl font-bold">{networkName}</p>
+{#if description != ""}
+<p class="text-2xl">{description}</p>
+{/if}
 <div class="flex flex-col space-y-3">
 {#each devices as device}
     <button class="bg-[#343434] border-gray-700 border-solid border-2 rounded p-3 w-64 flex flex-row"

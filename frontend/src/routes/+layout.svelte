@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import TheButton from '$lib/components/TheButton.svelte';
 	import '../app.css';
 	let { children } = $props();
 </script>
@@ -15,9 +16,7 @@
 
     <div class="grow"></div>
 
-    <div id="thebutton">
-        <button class="bg-orange-500 p-5 ml-4 my-4 rounded w-64 h-20 text-2xl">Scan</button>
-    </div>
+    <TheButton></TheButton>
 </div>
 
 <div class="ml-64 mt-10">
