@@ -2,8 +2,6 @@
 from subprocess import check_output
 import socket
 import asyncio
-import sys
-
 
 
 async def test_host(addr: int, timeout: float) -> bool:
@@ -43,8 +41,20 @@ def network_gen(network: str):
     for i in range(1, 2 ** (32 - int(netmask)) - 1):
         yield socket.inet_ntoa(int.to_bytes(net_id + i, 4))
 
-async def do_test(addr, lock, timeout, results: set[str]):
-    async with lock:
-        if await test_host(addr, timeout):
-            print("HOST", addr, "is up", file=sys.stderr)
-            results.add(addr)
+async def interactive_scan(network: str, timeout: float, max_tasks: int, queue: asyncio.Queue) -> list[str]:
+
+    lock = asyncio.Semaphore(max_tasks)
+
+    avail = []
+
+    async def _scan_task(addr):
+        async with lock:
+            if await test_host(addr, timeout):
+                await queue.put({"agent": "scanner", "type": "host up", "host": addr})
+                avail.append(addr)
+
+    await asyncio.gather(*(_scan_task(addr) for addr in network_gen(network)))
+
+    await queue.put({"agent": "scanner", "type": "scan completed"})
+
+    return avail

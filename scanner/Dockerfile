@@ -9,7 +9,7 @@ RUN apk update && apk add \
 WORKDIR /app
 
 COPY main.py .
-COPY os_detector.py .
+COPY cpe_detector.py .
 COPY scan.py .
 COPY cve/ ./cve
 

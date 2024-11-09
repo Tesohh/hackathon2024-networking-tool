@@ -4,51 +4,62 @@ import json
 import sys
 
 import scan
-import os_detector
-import cve.cve
+import cpe_detector as cpe_detector
+from cve.cve import CVE # :)
 import cve.fetch_cves
 
-
-async def download_cve(cpe: str, to: dict):
-    if cpe in to:
-        return
-    to[cpe] = None
-    to[cpe] = await cve.fetch_cves.from_cpe(cpe)
 
 def normalize_cpe(cpe: str) -> str:
     return cpe.replace("/", "2.3:", 1)
 
+async def msg_dump_task(queue: asyncio.Queue) -> None:
+    while message := await queue.get():
+        print(json.dumps(message), flush=True)
+
+def sendmsg(queue: asyncio.Queue, agent: str, **extras) -> None:
+    queue.put_nowait({"agent": agent, **extras})
+
 async def main(iface: str):
 
-    s = asyncio.Semaphore(1000)
-    res = set()
+    queue = asyncio.Queue()
 
-    await asyncio.gather(*(scan.do_test(ip_addr, s, 3.0, res) for ip_addr in scan.network_gen(scan.get_network(iface))))
+    dump_task = asyncio.create_task(msg_dump_task(queue))
 
-    host_info_map = {addr: os_detector.get_cpe(addr) for addr in res}
+    ## do the network scan
+    avail = await scan.interactive_scan(network   = scan.get_network(iface),
+                                        timeout   = 3.0,
+                                        max_tasks = 1000,
+                                        queue     = queue)
 
-    cve_infos: dict[str, dict] = {}
+    ## find the CPE for each host
+    hosts_info = await cpe_detector.interactive_cpe_finder(queue     = queue,
+                                                           addresses = avail,
+                                                           max_tasks = 30)
 
-    await asyncio.gather(*(download_cve(normalize_cpe(cpe), cve_infos) for item in host_info_map.values() for cpe in item["cpe"]))
+    ## download the necessary CVE infos
+    cve_map = await cve.fetch_cves.interactive_cve_fetch(cpe_list  = list(dict.fromkeys(normalize_cpe(cpe) for item in hosts_info.values() for cpe in item["cpe"])),
+                                                         queue     = queue,
+                                                         max_tasks = 5)
 
     result = []
 
-    for addr, info in host_info_map.items():
-
-        cve_list = set()
-
-        for cpe in info["cpe"]:
-            for vul in cve_infos[normalize_cpe(cpe)]["vulnerabilities"]:
-                cve_list.add(cve.cve.CVE.from_json(vul["cve"]))
+    ## associate the hosts with the corresponding CVE
+    for addr, info in hosts_info.items():
+        host_cve = [CVE.from_json(vul["cve"]).to_json() for cpe in info["cpe"] for vul in cve_map[normalize_cpe(cpe)]["vulnerabilities"]]
 
         result.append({
             "address": addr,
             "mac":     info["mac"],
             "vendor":  info["vendor"],
-            "cve":     list(cve.to_json() for cve in cve_list)
+            "cve":     host_cve
         })
 
-    json.dump(result, sys.stdout, indent="\t")
+        await queue.put({"agent": "cve-assign", "host": addr, "cve": host_cve})
+
+    await queue.put(None)
+    await dump_task
+
+    json.dump({"agent": "final", "data": result}, sys.stdout, indent=None)
 
 
 if __name__ == "__main__":
