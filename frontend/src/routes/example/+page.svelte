@@ -3,7 +3,7 @@
 	import { Device, Scan, Vulnerability } from "$lib/scan";
 
     let scan = new Scan("NETWORK 1", new Date(), [
-        new Device("Herris PC", [new Vulnerability("CVE-6969", "HIGH"), new Vulnerability("CVE-1234", "MEDIUM")]),
+        new Device("Herris PC", [new Vulnerability("CVE-1999-0199", "HIGH"), new Vulnerability("CVE-1234", "MEDIUM")]),
         new Device("Autoherrimilian", [new Vulnerability("CVE-6969", "MEDIUM")]),
         new Device("Herissa", [])
     ])

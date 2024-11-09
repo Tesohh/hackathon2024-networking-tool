@@ -26,6 +26,19 @@ export class Vulnerability {
         this.name = name;
         this.severity = severity;
     }
+
+    public icon(): string {
+        switch (this.severity) {
+            case "LOW":
+                return "🔵";
+            case "MEDIUM":
+                return "⚠️";
+            case "HIGH":
+                return "🛑";
+            default:
+                return "👽";
+        }
+    }
 }
 
 export class Scan {

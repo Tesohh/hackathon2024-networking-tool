@@ -33,8 +33,8 @@
         {:else}
             <div class="space-y-0">
             {#each device.vulnerabilities as vuln}
-                <div class="bg-gray-500 w-56 px-4 ml-8">
-                    <p>{vuln.name}</p>
+                <div class="bg-[#444444] w-56 px-4 ml-8">
+                    <a href="https://nvd.nist.gov/vuln/detail/{vuln.name}">{vuln.icon()} {vuln.name}</a>
                 </div>
             {/each}
             </div>
