@@ -12,12 +12,15 @@ async def get_nmap_xml(argv: list[str]) -> str:
 
     return (await proc.stderr.read()).decode()
 
-async def get_cpe(addr: str) -> dict[str, tuple[str, ...]]:
+async def get_cpe(addr: str, timeout: float) -> dict[str, tuple[str, ...]]:
 
     vendor_pattern = r'''addr="(.+)" addrtype="mac" vendor="(.+)"'''
     cpe_pattern = r'''<cpe>(cpe:.+)<\/cpe>'''
 
-    xml = await get_nmap_xml(["nmap", "-oX", "/dev/stderr", "-O", "-v", addr])
+    try:
+        xml = await asyncio.wait_for(get_nmap_xml(["nmap", "-oX", "/dev/stderr", "-O", "-v", addr]), timeout)
+    except asyncio.TimeoutError:
+        return {"mac": (), "vendor": (), "cpe": ()}
 
     mac_and_vendors = dict.fromkeys(re.findall(vendor_pattern, xml))
     cpe = dict.fromkeys(re.findall(cpe_pattern, xml))
@@ -33,7 +36,7 @@ async def get_cpe(addr: str) -> dict[str, tuple[str, ...]]:
         "cpe":    tuple(cpe)
     }
 
-async def interactive_cpe_finder(queue: asyncio.Queue, addresses: list[str], max_tasks: int) -> dict:
+async def interactive_cpe_finder(queue: asyncio.Queue, timeout: float, addresses: list[str], max_tasks: int) -> dict:
 
     lock = asyncio.Semaphore(max_tasks)
 
@@ -41,7 +44,7 @@ async def interactive_cpe_finder(queue: asyncio.Queue, addresses: list[str], max
 
     async def _find(addr):
         async with lock:
-            cpe = await get_cpe(addr)
+            cpe = await get_cpe(addr, timeout)
             await queue.put({"agent": "cpe", "type": "cpe result", "result": cpe})
             result[addr] = cpe
 

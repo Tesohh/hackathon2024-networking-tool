@@ -34,12 +34,14 @@ async def main(iface: str):
     ## find the CPE for each host
     hosts_info = await cpe_detector.interactive_cpe_finder(queue     = queue,
                                                            addresses = avail,
+                                                           timeout   = 20.0,
                                                            max_tasks = 30)
 
     ## download the necessary CVE infos
     cve_map = await cve.fetch_cves.interactive_cve_fetch(cpe_list  = list(dict.fromkeys(normalize_cpe(cpe) for item in hosts_info.values() for cpe in item["cpe"])),
                                                          queue     = queue,
-                                                         max_tasks = 5)
+                                                         max_tasks = 5,
+                                                         timeout   = 300.0)
 
     result = []
 
