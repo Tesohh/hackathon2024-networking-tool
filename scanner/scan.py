@@ -35,7 +35,7 @@ def get_network(iface: str) -> str:
         ip_addr, netmask = match.groups()
 
         if netmask.startswith("0x"):
-            netmask = int(netmask)
+            netmask = int(netmask, 0)
         else:
             netmask = int.from_bytes(socket.inet_aton(netmask))
 
