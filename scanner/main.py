@@ -45,7 +45,9 @@ async def main(iface: str):
 
     ## associate the hosts with the corresponding CVE
     for addr, info in hosts_info.items():
-        host_cve = [CVE.from_json(vul["cve"]).to_json() for cpe in info["cpe"] for vul in cve_map[normalize_cpe(cpe)]["vulnerabilities"]]
+
+        host_cve = [CVE.from_json(vul["cve"]) for cpe in info["cpe"] for vul in cve_map.get(normalize_cpe(cpe), {}).get("vulnerabilities", [])]
+        host_cve = [cve.to_json() for cve in host_cve if not cve.patched]
 
         result.append({
             "address": addr,
