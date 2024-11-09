@@ -3,9 +3,10 @@
 	import { Device, Scan, Vulnerability } from "$lib/scan";
 
     let scan = new Scan("NETWORK 1", new Date(), [
-        new Device("Herris PC", [new Vulnerability("CVE-1999-0199", "HIGH"), new Vulnerability("CVE-1234", "MEDIUM")]),
-        new Device("Autoherrimilian", [new Vulnerability("CVE-6969", "MEDIUM")]),
-        new Device("Herissa", [])
+        new Device("Macbook air", [new Vulnerability("CVE-1999-0199", "HIGH"), new Vulnerability("CVE-2023-44090", "MEDIUM")]),
+        new Device("Sony Vaio", [new Vulnerability("CVE-2008-10003", "LOW"), new Vulnerability("CVE-2008-7291", "HIGH")]),
+        new Device("Samsung Smart Display", []),
+        new Device("Sennheiser Smart Speaker", [new Vulnerability("CVE-2019-8920", "MEDIUM")])
     ])
     
     let networkName = $state(scan.networkName)
@@ -15,4 +16,3 @@
 </script>
 
 <Scanview networkName={networkName} date={date} devices={devices}></Scanview>
-<button onclick={() => { networkName = "NETWROK 2" }}>Change network</button>
