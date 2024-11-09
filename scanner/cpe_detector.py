@@ -22,6 +22,7 @@ async def get_cpe(addr: str, timeout: float) -> dict[str, tuple[str, ...]]:
     except asyncio.TimeoutError:
         return {"mac": (), "vendor": (), "cpe": ()}
 
+    # print(xml)
     mac_and_vendors = dict.fromkeys(re.findall(vendor_pattern, xml))
     cpe = dict.fromkeys(re.findall(cpe_pattern, xml))
 
@@ -30,6 +31,7 @@ async def get_cpe(addr: str, timeout: float) -> dict[str, tuple[str, ...]]:
     else:
         mac = vendors = ()
 
+    # print(cpe)
     return {
         "mac":    tuple(mac),
         "vendor": tuple(vendors),

@@ -50,6 +50,7 @@ async def main(iface: str):
 
         host_cve = [CVE.from_json(vul["cve"]) for cpe in info["cpe"] for vul in cve_map.get(normalize_cpe(cpe), {}).get("vulnerabilities", [])]
         host_cve = [cve.to_json() for cve in host_cve if not cve.patched]
+        host_cve = host_cve[:5]
 
         result.append({
             "address": addr,

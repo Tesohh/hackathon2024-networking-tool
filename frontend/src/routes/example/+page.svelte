@@ -15,4 +15,4 @@
 
 </script>
 
-<Scanview networkName={networkName} date={date} devices={devices}></Scanview>
+<Scanview networkName={networkName} description={""} date={date} devices={devices}></Scanview>

@@ -20,21 +20,26 @@
             status = await response.json();
             if (status.agent == "final") {
                 lastStatus = "done"
+                return
             }
             lastStatus = status.type
 
-            if (status.agent == "scanner") {
+            if (status.agent == "scanner" && status.type == "host up") {
                 if (registeredHosts.includes(status.host)) return
                 registeredHosts.push(status.host)
                 devices.push(new Device(status.host, status.host, []))
             }
+            console.info(status.agent)
 
             if (status.agent == "cve-assign") {
-                let device = devices.find((dev) => dev.ip == status.host)
-                if (device == undefined) return;
+                let deviceID = devices.findIndex((dev) => dev.ip == status.host)
+                console.log(deviceID)
+                if (deviceID == -1) return;
                 for (let cve of status.cve) {
-                    device.vulnerabilities.push(new Vulnerability(cve.id, cve.severity))
+                    devices[deviceID].vulnerabilities.push(new Vulnerability(cve.id, cve.severity))
+                    devices[deviceID] = devices[deviceID]
                 }
+                console.log(devices)
             }
             
             console.log(status)
