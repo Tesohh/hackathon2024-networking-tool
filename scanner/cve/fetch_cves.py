@@ -23,6 +23,7 @@ async def get_cve(cpe: str, use_cache: bool = True) -> dict:
 
     cve = await download_cve(cpe)
 
+
     if use_cache:
         os.makedirs(".cache", exist_ok=True)
 
@@ -31,7 +32,7 @@ async def get_cve(cpe: str, use_cache: bool = True) -> dict:
 
     return cve
 
-async def interactive_cve_fetch(cpe_list: list[str], queue: asyncio.Queue, max_tasks: int) -> dict:
+async def interactive_cve_fetch(cpe_list: list[str], timeout: float, queue: asyncio.Queue, max_tasks: int) -> dict:
 
     lock = asyncio.Semaphore(max_tasks)
 
@@ -42,9 +43,12 @@ async def interactive_cve_fetch(cpe_list: list[str], queue: asyncio.Queue, max_t
 
             await queue.put({"agent": "cve", "type": "cve download start", "cpe": cpe})
 
-            cve[cpe] = await get_cve(cpe)
-
-            await queue.put({"agent": "cve", "type": "cve download complete", "cpe": cpe})
+            try:
+                cve[cpe] = await asyncio.wait_for(get_cve(cpe), timeout)
+            except Exception:
+                await queue.put({"agent": "cve", "type": "cve download failed", "cpe": cpe})
+            else:
+                await queue.put({"agent": "cve", "type": "cve download complete", "cpe": cpe})
 
     await asyncio.gather(*(_download_cve(cpe) for cpe in cpe_list))
 

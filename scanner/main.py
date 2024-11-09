@@ -34,18 +34,22 @@ async def main(iface: str):
     ## find the CPE for each host
     hosts_info = await cpe_detector.interactive_cpe_finder(queue     = queue,
                                                            addresses = avail,
+                                                           timeout   = 20.0,
                                                            max_tasks = 30)
 
     ## download the necessary CVE infos
     cve_map = await cve.fetch_cves.interactive_cve_fetch(cpe_list  = list(dict.fromkeys(normalize_cpe(cpe) for item in hosts_info.values() for cpe in item["cpe"])),
                                                          queue     = queue,
-                                                         max_tasks = 5)
+                                                         max_tasks = 5,
+                                                         timeout   = 300.0)
 
     result = []
 
     ## associate the hosts with the corresponding CVE
     for addr, info in hosts_info.items():
-        host_cve = [CVE.from_json(vul["cve"]).to_json() for cpe in info["cpe"] for vul in cve_map[normalize_cpe(cpe)]["vulnerabilities"]]
+
+        host_cve = [CVE.from_json(vul["cve"]) for cpe in info["cpe"] for vul in cve_map.get(normalize_cpe(cpe), {}).get("vulnerabilities", [])]
+        host_cve = [cve.to_json() for cve in host_cve if not cve.patched]
 
         result.append({
             "address": addr,
