@@ -2,7 +2,7 @@
 from subprocess import check_output
 import socket
 import asyncio
-
+import re
 
 async def test_host(addr: int, timeout: float) -> bool:
     s = socket.socket()
@@ -23,10 +23,25 @@ async def test_host(addr: int, timeout: float) -> bool:
 
 def get_network(iface: str) -> str:
 
-    for line in check_output(["ip", "a", "list", iface]).decode().splitlines():
-        if not "inet" in line:
+    pattern = r"inet (\S+).+netmask (\S+)"
+
+    for line in check_output(["ifconfig", iface]).decode().splitlines():
+
+        match = re.search(pattern, line)
+
+        if match is None:
             continue
-        return line.split()[1]
+
+        ip_addr, netmask = match.groups()
+
+        if netmask.startswith("0x"):
+            netmask = int(netmask)
+        else:
+            netmask = int.from_bytes(socket.inet_aton(netmask))
+
+        cidr = 32 - (((~netmask) & 0xFFFFFFFF).bit_length())
+
+        return ip_addr + "/" + str(cidr)
 
     raise Exception("unable to get network address")
 
