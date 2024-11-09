@@ -1,0 +1,19 @@
+@import "tailwindcss/base";
+@import "tailwindcss/components";
+@import "tailwindcss/utilities";
+
+/* 220 113 45 */
+/* 38	38	38	*/
+
+body {
+	background: rgb(38, 38, 38);
+	color: white;
+}
+
+a {
+	text-decoration: underline;
+}
+
+a:hover {
+	color: rgb(220, 113, 45);
+}
