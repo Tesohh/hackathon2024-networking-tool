@@ -6,7 +6,7 @@ from dataclasses import dataclass
 # Vulnerability severity
 # That's it
 
-@dataclass
+@dataclass(slots=True, frozen=True)
 class CVE:
     id: str
     severity: str
@@ -14,6 +14,7 @@ class CVE:
     @classmethod
     def from_json(cls, src: dict) -> CVE:
         severity = "UNKNOWN"
+
         for k, v in src["metrics"].items():
             if k == "cvssMetricV2":
                 severity = v[0]["baseSeverity"]
@@ -27,4 +28,8 @@ class CVE:
             severity=severity
         )
 
-
+    def to_json(self) -> dict:
+        return {
+            "id": self.id,
+            "severity": self.severity
+        }

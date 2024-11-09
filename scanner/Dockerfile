@@ -4,7 +4,7 @@ FROM alpine:3.18 AS scanner
 RUN apk update && apk add \
     python3 \
     nmap \
-    py3-requests
+    py3-aiohttp
 
 WORKDIR /app
 
